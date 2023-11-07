@@ -1,7 +1,7 @@
 use crate::token::TokenType;
 
 pub struct Lexer {
-    source_code: &'static str,
+    source_code: String,
     current_index: usize,
 }
 
@@ -107,6 +107,6 @@ fn is_numeric(literal: &String) -> bool {
     }
 }
 
-pub fn new(source_code: &'static str) -> Lexer {
+pub fn new(source_code: String) -> Lexer {
     Lexer { source_code, current_index: 0 }
 }
