@@ -1,5 +1,5 @@
 #[derive(PartialEq, Debug)]
-pub enum TokenType {
+pub enum Token {
     Illegal,
     Eof,
     Identifier { literal: String },

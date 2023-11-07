@@ -6,12 +6,8 @@ pub fn start() {
         let mut buffer = String::new();
         io::stdin().read_line(&mut buffer).unwrap();
         let mut lexer = lexer::new(buffer);
-        loop {
-            let result = lexer.next_token();
-            if result.is_err() {
-                break;
-            }
-            println!("{:?}", result.unwrap());
+        while let Ok(token) = lexer.next_token() {
+            println!("{:?}", token);
         }
     }
 }

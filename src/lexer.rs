@@ -1,4 +1,4 @@
-use crate::token::TokenType;
+use crate::token::Token;
 
 pub struct Lexer {
     source_code: String,
@@ -6,7 +6,7 @@ pub struct Lexer {
 }
 
 impl Lexer {
-    pub fn next_token(&mut self) -> Result<TokenType, &str> {
+    pub fn next_token(&mut self) -> Result<Token, &str> {
         self.skip_whitespace();
 
         let len = self.source_code.len();
@@ -17,42 +17,42 @@ impl Lexer {
 
         if self.current_index == len {
             self.current_index = self.current_index + 1;
-            return Ok(TokenType::Eof);
+            return Ok(Token::Eof);
         }
 
         let character = self.get_char(self.current_index);
 
         let token = match character {
-            '(' => TokenType::LeftParenthesis,
-            ')' => TokenType::RightParenthesis,
-            '+' => TokenType::Plus,
-            '-' => TokenType::Minus,
-            ',' => TokenType::Comma,
-            ';' => TokenType::Semicolon,
-            '{' => TokenType::LeftBracket,
-            '}' => TokenType::RightBracket,
-            '/' => TokenType::Slash,
-            '*' => TokenType::Asterisk,
-            '<' => TokenType::LessThan,
-            '>' => TokenType::GreaterThan,
+            '(' => Token::LeftParenthesis,
+            ')' => Token::RightParenthesis,
+            '+' => Token::Plus,
+            '-' => Token::Minus,
+            ',' => Token::Comma,
+            ';' => Token::Semicolon,
+            '{' => Token::LeftBracket,
+            '}' => Token::RightBracket,
+            '/' => Token::Slash,
+            '*' => Token::Asterisk,
+            '<' => Token::LessThan,
+            '>' => Token::GreaterThan,
             '=' => {
                 if self.next_char() == '=' {
                     self.current_index += 1;
-                    TokenType::Equal
+                    Token::Equal
                 } else {
-                    TokenType::Assign
+                    Token::Assign
                 }
             }
             '!' => {
                 if self.next_char() == '=' {
                     self.current_index += 1;
-                    TokenType::NotEqual
+                    Token::NotEqual
                 } else {
-                    TokenType::Bang
+                    Token::Bang
                 }
             }
             c if c.is_alphanumeric() => self.read_alphanumeric(),
-            _ => TokenType::Illegal
+            _ => Token::Illegal
         };
 
         self.current_index += 1;
@@ -79,7 +79,7 @@ impl Lexer {
         self.get_char(self.current_index + 1)
     }
 
-    fn read_alphanumeric(&mut self) -> TokenType {
+    fn read_alphanumeric(&mut self) -> Token {
         let mut literal = String::from(self.current_char());
         while self.next_char().is_alphanumeric() {
             self.current_index += 1;
@@ -87,24 +87,24 @@ impl Lexer {
         }
 
         match literal.as_str() {
-            "if" => TokenType::If,
-            "else" => TokenType::Else,
-            "fn" => TokenType::Function,
-            "let" => TokenType::Let,
-            "return" => TokenType::Return,
-            "true" => TokenType::True,
-            "false" => TokenType::False,
-            _ if is_numeric(&literal) => TokenType::Int { literal },
-            _ => TokenType::Identifier { literal },
+            "if" => Token::If,
+            "else" => Token::Else,
+            "fn" => Token::Function,
+            "let" => Token::Let,
+            "return" => Token::Return,
+            "true" => Token::True,
+            "false" => Token::False,
+            _ if is_numeric(&literal) => Token::Int { literal },
+            _ => Token::Identifier { literal },
         }
     }
 }
 
 fn is_numeric(literal: &String) -> bool {
-    match literal.is_empty() {
-        true => false,
-        false => literal.chars().nth(0).unwrap().is_numeric()
-    }
+    literal.chars()
+        .nth(0)
+        .filter(|x| x.is_numeric())
+        .is_some()
 }
 
 pub fn new(source_code: String) -> Lexer {
