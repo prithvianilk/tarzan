@@ -7,6 +7,8 @@ pub struct Lexer {
 
 impl Lexer {
     pub fn next_token(&mut self) -> Result<TokenType, &str> {
+        self.skip_whitespace();
+
         let len = self.source_code.len();
 
         if self.current_index > len {
@@ -21,10 +23,6 @@ impl Lexer {
         let character = self.get_char(self.current_index);
 
         let token = match character {
-            ' ' | '\n' => {
-                self.current_index = self.current_index + 1;
-                return self.next_token();
-            }
             '(' => TokenType::LeftParenthesis,
             ')' => TokenType::RightParenthesis,
             '+' => TokenType::Plus,
@@ -38,7 +36,7 @@ impl Lexer {
             '<' => TokenType::LessThan,
             '>' => TokenType::GreaterThan,
             '=' => {
-                if self.get_char(self.current_index + 1) == '=' {
+                if self.next_char() == '=' {
                     self.current_index += 1;
                     TokenType::Equal
                 } else {
@@ -46,7 +44,7 @@ impl Lexer {
                 }
             }
             '!' => {
-                if self.get_char(self.current_index + 1) == '=' {
+                if self.next_char() == '=' {
                     self.current_index += 1;
                     TokenType::NotEqual
                 } else {
@@ -61,6 +59,13 @@ impl Lexer {
         Ok(token)
     }
 
+    fn skip_whitespace(&mut self) {
+        let len = self.source_code.len();
+        while self.current_index < len && self.current_char().is_ascii_whitespace() {
+            self.current_index += 1
+        }
+    }
+
     fn get_char(&self, index: usize) -> char {
         let character_as_u32 = self.source_code.as_bytes()[index] as u32;
         char::from_u32(character_as_u32).unwrap()
@@ -70,9 +75,13 @@ impl Lexer {
         self.get_char(self.current_index)
     }
 
+    fn next_char(&self) -> char {
+        self.get_char(self.current_index + 1)
+    }
+
     fn read_alphanumeric(&mut self) -> TokenType {
         let mut literal = String::from(self.current_char());
-        while self.get_char(self.current_index + 1).is_alphanumeric() {
+        while self.next_char().is_alphanumeric() {
             self.current_index += 1;
             literal.push(self.current_char());
         }
