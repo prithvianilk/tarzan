@@ -27,6 +27,35 @@ fn test_let_statements() {
             Statement::Let(let_statement) => {
                 assert_eq!(expected_literal, let_statement.identifier_name);
             }
+            _ => panic!("statement is not a let statement")
+        }
+    };
+}
+
+#[test]
+fn test_return_statements() {
+    let source_code = "
+        return 5;
+        return 10;
+        return 993322;
+    ".into();
+
+    let lexer = lexer::new(source_code);
+    let mut parser = parser::new(lexer);
+    let program = parser.parse().unwrap();
+
+    assert_zero_parser_errors(&parser);
+    assert_eq!(3, program.statements.len());
+
+    let expected_literals = vec!["5", "10", "993322"];
+
+    for i in 0..3 {
+        let expected_literal = expected_literals[i];
+        let statement = program.statements.get(i).unwrap();
+
+        match statement {
+            Statement::Return(_) => {}
+            _ => panic!("statement is not a return statement")
         }
     };
 }

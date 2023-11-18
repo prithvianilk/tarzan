@@ -53,6 +53,7 @@ impl Parser {
     fn parse_statement(&mut self) -> Option<Statement> {
         return match self.current_token {
             Token::Let => self.parse_let_statement(),
+            Token::Return => self.parse_return_statement(),
             _ => None
         };
     }
@@ -80,14 +81,20 @@ impl Parser {
         return None;
     }
 
+    fn parse_return_statement(&mut self) -> Option<Statement> {
+        self.next_token();
+        let expression = self.parse_expression()?;
+        return Some(Statement::Return(expression));
+    }
+
     fn parse_expression(&mut self) -> Option<Expression> {
         while self.current_token != Token::Semicolon {
             self.next_token()
         }
         let literal = String::from("dummy");
-        Some(Expression::Identifier(
+        return Some(Expression::Identifier(
             Token::Identifier { literal }
-        ))
+        ));
     }
 
     fn add_err(&mut self, expected: String, value: Token) {

@@ -1,7 +1,8 @@
 use crate::token;
 
 pub enum Statement {
-    Let(LetStatement)
+    Let(LetStatement),
+    Return(Expression),
 }
 
 pub enum Expression {
