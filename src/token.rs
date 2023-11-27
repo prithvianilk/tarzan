@@ -1,4 +1,4 @@
-#[derive(PartialEq, Debug, Clone)]
+#[derive(PartialEq, Debug, Clone, Eq, Hash)]
 pub enum Token {
     Illegal,
     Eof,
@@ -27,4 +27,38 @@ pub enum Token {
     GreaterThan,
     Equal,
     NotEqual,
+}
+
+impl Token {
+    pub fn value(self) -> u8 {
+        match self {
+            Token::Illegal => 0,
+            Token::Eof => 1,
+            Token::Identifier { .. } => 2,
+            Token::Int { .. } => 3,
+            Token::Assign => 4,
+            Token::Plus => 5,
+            Token::Minus => 6,
+            Token::Comma => 7,
+            Token::Semicolon => 8,
+            Token::LeftParenthesis => 9,
+            Token::RightParenthesis => 10,
+            Token::LeftBracket => 11,
+            Token::RightBracket => 12,
+            Token::Return => 13,
+            Token::Function => 14,
+            Token::Let => 15,
+            Token::False => 16,
+            Token::True => 17,
+            Token::Slash => 18,
+            Token::Asterisk => 19,
+            Token::Bang => 20,
+            Token::If => 21,
+            Token::Else => 22,
+            Token::LessThan => 23,
+            Token::GreaterThan => 24,
+            Token::Equal => 25,
+            Token::NotEqual => 26,
+        }
+    }
 }

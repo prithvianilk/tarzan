@@ -1,6 +1,7 @@
 use tarzan::{lexer, parser};
-use tarzan::ast::Statement;
+use tarzan::ast::{Statement, Expression};
 use tarzan::parser::Parser;
+use tarzan::token::Token;
 
 #[test]
 fn test_let_statements() {
@@ -58,6 +59,23 @@ fn test_return_statements() {
             _ => panic!("statement is not a return statement")
         }
     };
+}
+
+#[test]
+fn test_identifier_expression() {
+    let source_code = "foobar;".into();
+    let lexer = lexer::new(source_code);
+    let mut parser = parser::new(lexer);
+    let program = parser.parse().unwrap();
+
+    assert_zero_parser_errors(&parser);
+    assert_eq!(1, program.statements.len());
+
+    if let Statement::Expression(Expression::Identifier(token)) = program.statements.get(0).unwrap() {
+        assert_eq!(token, &Token::Identifier { literal: "foobar".into() })
+    } else {
+        panic!("statement is not an expression")
+    }
 }
 
 fn assert_zero_parser_errors(parser: &Parser) {
