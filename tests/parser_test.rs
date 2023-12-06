@@ -1,5 +1,5 @@
 use tarzan::{lexer, parser};
-use tarzan::ast::{Statement, Expression};
+use tarzan::ast::{Statement, Expression, Program};
 use tarzan::parser::Parser;
 use tarzan::token::Token;
 
@@ -11,11 +11,7 @@ fn test_let_statements() {
         let foobar = 838383;
     ".into();
 
-    let lexer = lexer::new(source_code);
-    let mut parser = parser::new(lexer);
-    let program = parser.parse().unwrap();
-
-    assert_zero_parser_errors(&parser);
+    let program = parse(source_code);
     assert_eq!(3, program.statements.len());
 
     let expected_literals = vec!["x", "y", "foobar"];
@@ -33,6 +29,14 @@ fn test_let_statements() {
     };
 }
 
+fn parse(source_code: String) -> Program {
+    let lexer = lexer::new(source_code);
+    let mut parser = parser::new(lexer);
+    let program = parser.parse().unwrap();
+    assert_zero_parser_errors(&parser);
+    return program;
+}
+
 #[test]
 fn test_return_statements() {
     let source_code = "
@@ -41,11 +45,7 @@ fn test_return_statements() {
         return 993322;
     ".into();
 
-    let lexer = lexer::new(source_code);
-    let mut parser = parser::new(lexer);
-    let program = parser.parse().unwrap();
-
-    assert_zero_parser_errors(&parser);
+    let program = parse(source_code);
     assert_eq!(3, program.statements.len());
 
     let expected_literals = vec!["5", "10", "993322"];
@@ -64,11 +64,7 @@ fn test_return_statements() {
 #[test]
 fn test_identifier_expression() {
     let source_code = "foobar;".into();
-    let lexer = lexer::new(source_code);
-    let mut parser = parser::new(lexer);
-    let program = parser.parse().unwrap();
-
-    assert_zero_parser_errors(&parser);
+    let program = parse(source_code);
     assert_eq!(1, program.statements.len());
 
     let first_statement = program.statements.get(0).unwrap();
@@ -82,11 +78,7 @@ fn test_identifier_expression() {
 #[test]
 fn test_integer_literal_expression() {
     let source_code = "5;".into();
-    let lexer = lexer::new(source_code);
-    let mut parser = parser::new(lexer);
-    let program = parser.parse().unwrap();
-
-    assert_zero_parser_errors(&parser);
+    let program = parse(source_code);
     assert_eq!(1, program.statements.len());
 
     let first_statement = program.statements.get(0).unwrap();
@@ -94,7 +86,7 @@ fn test_integer_literal_expression() {
         assert_eq!(token, &Token::Int { literal: "5".into() });
         assert_eq!(*value, 5i64);
     } else {
-        panic!("statement is not an expression")
+        panic!("statement is not an expression, got: {}", first_statement)
     }
 }
 
@@ -103,7 +95,7 @@ fn assert_zero_parser_errors(parser: &Parser) {
         return;
     }
     for err in parser.errors.iter() {
-        println!("{}", err)
+        println!("found error: {}", err)
     }
     panic!()
 }
