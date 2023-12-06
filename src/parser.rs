@@ -1,19 +1,21 @@
 use std::collections::HashMap;
+use std::f32::consts::E;
+use std::num::ParseIntError;
 use crate::lexer::Lexer;
 use crate::ast::{Expression, LetStatement, Program, Statement};
-use crate::token::Token;
+use crate::token::{Token, token_value};
 
-type PrefixParseFunction = fn(&Parser) -> Expression;
+type PrefixParseFunction = fn(&mut Parser) -> Option<Expression>;
 
-type InfixParseFunction = fn(&Parser, Expression) -> Expression;
+type InfixParseFunction = fn(&mut Parser, Expression) -> Expression;
 
 pub struct Parser {
     lexer: Lexer,
     current_token: Token,
     peek_token: Token,
     pub errors: Vec<String>,
-    token_to_prefix_parse_functions_map: HashMap<u8, PrefixParseFunction>,
-    token_to_infix_parse_functions_map: HashMap<u8, InfixParseFunction>,
+    token_to_prefix_parse_functions_map: HashMap<i8, PrefixParseFunction>,
+    token_to_infix_parse_functions_map: HashMap<i8, InfixParseFunction>,
 }
 
 enum Precedence {
@@ -48,13 +50,23 @@ pub fn new(lexer: Lexer) -> Parser {
         token_to_infix_parse_functions_map: HashMap::new(),
     };
 
-    parser.token_to_prefix_parse_functions_map.insert(
-        2, |parser| { Expression::Identifier(parser.current_token.clone()) },
-    );
+    register_prefix_parse_functions(&mut parser);
 
     parser.next_token_n_times(2);
 
     return parser;
+}
+
+fn register_prefix_parse_functions(parser: &mut Parser) {
+    parser.token_to_prefix_parse_functions_map.insert(
+        token_value::IDENTIFIER,
+        |parser| { Some(Expression::Identifier(parser.current_token.clone())) },
+    );
+
+    parser.token_to_prefix_parse_functions_map.insert(
+        token_value::INT,
+        |parser| { parser.parse_integer_literal_expression() },
+    );
 }
 
 impl Parser {
@@ -132,19 +144,37 @@ impl Parser {
         ));
     }
 
-    fn parse_expression_precedence(&mut self, precedence: Precedence) -> Option<Expression> {
-        let prefix_parse_function =
-            self.token_to_prefix_parse_functions_map.get(&self.current_token.clone().value())?;
-
-        return Some(prefix_parse_function(self));
-    }
-
     fn parse_expression_statement(&mut self) -> Option<Statement> {
         let expression = self.parse_expression_precedence(Precedence::Lowest)?;
         if self.peek_token == Token::Semicolon {
             self.next_token();
         }
         return Some(Statement::Expression(expression));
+    }
+
+    fn parse_expression_precedence(&mut self, precedence: Precedence) -> Option<Expression> {
+        let prefix_parse_function =
+            self.token_to_prefix_parse_functions_map.get(&self.current_token.clone().value())?;
+
+        return prefix_parse_function(self);
+    }
+
+    fn parse_integer_literal_expression(&mut self) -> Option<Expression> {
+        if let Token::Int { literal } = self.current_token.clone() {
+            let parsed_result = literal.parse::<i64>();
+
+            if let Err(err) = parsed_result.clone() {
+                let message = format!("Parsing error, could not parse: {}; {}", literal, err);
+                self.errors.push(message);
+            }
+
+            return Some(Expression::IntegerLiteral {
+                token: self.current_token.clone(),
+                value: parsed_result.unwrap(),
+            });
+        }
+
+        return None;
     }
 
     fn add_err(&mut self, expected: &str, value: Token) {

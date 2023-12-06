@@ -19,8 +19,10 @@ impl Display for Statement {
 
 #[derive(Debug)]
 pub enum Expression {
-    Identifier(token::Token)
+    Identifier(token::Token),
+    IntegerLiteral { token: token::Token, value: i64 },
 }
+
 
 pub struct Program {
     pub statements: Vec<Statement>,

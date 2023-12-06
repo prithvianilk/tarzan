@@ -71,8 +71,28 @@ fn test_identifier_expression() {
     assert_zero_parser_errors(&parser);
     assert_eq!(1, program.statements.len());
 
-    if let Statement::Expression(Expression::Identifier(token)) = program.statements.get(0).unwrap() {
+    let first_statement = program.statements.get(0).unwrap();
+    if let Statement::Expression(Expression::Identifier(token)) = first_statement {
         assert_eq!(token, &Token::Identifier { literal: "foobar".into() })
+    } else {
+        panic!("statement is not an expression containing an indentifier {}", first_statement)
+    }
+}
+
+#[test]
+fn test_integer_literal_expression() {
+    let source_code = "5;".into();
+    let lexer = lexer::new(source_code);
+    let mut parser = parser::new(lexer);
+    let program = parser.parse().unwrap();
+
+    assert_zero_parser_errors(&parser);
+    assert_eq!(1, program.statements.len());
+
+    let first_statement = program.statements.get(0).unwrap();
+    if let Statement::Expression(Expression::IntegerLiteral { token, value }) = first_statement {
+        assert_eq!(token, &Token::Int { literal: "5".into() });
+        assert_eq!(*value, 5i64);
     } else {
         panic!("statement is not an expression")
     }
