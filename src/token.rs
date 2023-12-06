@@ -37,6 +37,12 @@ pub mod token_value {
     pub const ILLEGAL: i8 = -1;
 }
 
+pub mod token_name {
+    pub const IDENTIFIER: &str = "Identifier";
+
+    pub const ASSIGN: &str = "Assign";
+}
+
 impl Token {
     pub fn value(self) -> i8 {
         match self {

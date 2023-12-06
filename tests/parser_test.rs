@@ -28,7 +28,7 @@ fn test_let_statements() {
             Statement::Let(let_statement) => {
                 assert_eq!(expected_literal, let_statement.identifier_name);
             }
-            _ => panic!("statement is not a let statement")
+            _ => panic!("statement is not a let statement, got: {}", statement)
         }
     };
 }
@@ -56,7 +56,7 @@ fn test_return_statements() {
 
         match statement {
             Statement::Return(_) => {}
-            _ => panic!("statement is not a return statement")
+            _ => panic!("statement is not a return statement, got: {}", statement)
         }
     };
 }
@@ -75,7 +75,7 @@ fn test_identifier_expression() {
     if let Statement::Expression(Expression::Identifier(token)) = first_statement {
         assert_eq!(token, &Token::Identifier { literal: "foobar".into() })
     } else {
-        panic!("statement is not an expression containing an indentifier {}", first_statement)
+        panic!("statement is not an expression containing an identifier, got: {}", first_statement)
     }
 }
 

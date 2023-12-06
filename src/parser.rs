@@ -1,9 +1,7 @@
 use std::collections::HashMap;
-use std::f32::consts::E;
-use std::num::ParseIntError;
 use crate::lexer::Lexer;
 use crate::ast::{Expression, LetStatement, Program, Statement};
-use crate::token::{Token, token_value};
+use crate::token::{Token, token_name, token_value};
 
 type PrefixParseFunction = fn(&mut Parser) -> Option<Expression>;
 
@@ -110,7 +108,7 @@ impl Parser {
             self.next_token();
 
             if self.peek_token.clone() != Token::Assign {
-                self.add_err("Assign", self.peek_token.clone());
+                self.add_err(token_name::ASSIGN, self.peek_token.clone());
                 return None;
             }
             self.next_token();
@@ -124,7 +122,7 @@ impl Parser {
                 }
             ));
         }
-        self.add_err("Identifier", self.peek_token.clone());
+        self.add_err(token_name::IDENTIFIER, self.peek_token.clone());
         return None;
     }
 
