@@ -21,6 +21,7 @@ impl Display for Statement {
 pub enum Expression {
     Identifier(token::Token),
     IntegerLiteral { token: token::Token, value: i64 },
+    PrefixExpression { operator: String, right: Box<Expression> },
 }
 
 

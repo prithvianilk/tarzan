@@ -65,6 +65,16 @@ fn register_prefix_parse_functions(parser: &mut Parser) {
         token_value::INT,
         |parser| { parser.parse_integer_literal_expression() },
     );
+
+    parser.token_to_prefix_parse_functions_map.insert(
+        token_value::MINUS,
+        |parser| { parser.parse_prefix_expression() },
+    );
+
+    parser.token_to_prefix_parse_functions_map.insert(
+        token_value::BANG,
+        |parser| { parser.parse_prefix_expression() },
+    );
 }
 
 impl Parser {
@@ -151,10 +161,15 @@ impl Parser {
     }
 
     fn parse_expression_precedence(&mut self, precedence: Precedence) -> Option<Expression> {
-        let prefix_parse_function =
-            self.token_to_prefix_parse_functions_map.get(&self.current_token.clone().value())?;
-
-        return prefix_parse_function(self);
+        let optional_prefix_parse_function = self.token_to_prefix_parse_functions_map.get(&self.current_token.clone().value());
+        return if let Some(prefix_parse_function) = optional_prefix_parse_function {
+            prefix_parse_function(self)
+        } else {
+            let message =
+                format!("Parsing error, no prefix parsing function defined for {:?}", self.current_token.clone());
+            self.errors.push(message);
+            None
+        };
     }
 
     fn parse_integer_literal_expression(&mut self) -> Option<Expression> {
@@ -173,6 +188,19 @@ impl Parser {
         }
 
         return None;
+    }
+
+    fn parse_prefix_expression(&mut self) -> Option<Expression> {
+        let operator = self.current_token.clone().literal()?;
+
+        self.next_token();
+
+        let right = self.parse_expression_precedence(Precedence::Prefix)?;
+
+        return Some(Expression::PrefixExpression {
+            operator,
+            right: Box::new(right),
+        });
     }
 
     fn add_err(&mut self, expected: &str, value: Token) {

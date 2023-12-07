@@ -82,11 +82,56 @@ fn test_integer_literal_expression() {
     assert_eq!(1, program.statements.len());
 
     let first_statement = program.statements.get(0).unwrap();
-    if let Statement::Expression(Expression::IntegerLiteral { token, value }) = first_statement {
-        assert_eq!(token, &Token::Int { literal: "5".into() });
-        assert_eq!(*value, 5i64);
+    if let Statement::Expression(expression) = first_statement {
+        assert_is_integer_expression(expression, "5".into());
     } else {
         panic!("statement is not an expression, got: {}", first_statement)
+    }
+}
+
+fn assert_is_integer_expression(expression: &Expression, expected_literal: String) {
+    let expected_value = expected_literal.parse::<i64>().unwrap();
+
+    if let Expression::IntegerLiteral { token, value } = expression {
+        assert_eq!(&Token::Int { literal: expected_literal }, token);
+        assert_eq!(&expected_value, value);
+    } else {
+        panic!("expression is not of type integer literal, got: {:?}", expression)
+    }
+}
+
+#[test]
+fn test_prefix_expressions() {
+    struct PrefixExpressionTestCase {
+        source_code: String,
+        operator: String,
+        expected_literal: String,
+    }
+
+    let test_cases = vec![
+        PrefixExpressionTestCase {
+            source_code: "!5;".into(),
+            operator: "!".into(),
+            expected_literal: "5".into(),
+        },
+        PrefixExpressionTestCase {
+            source_code: "-15;".into(),
+            operator: "-".into(),
+            expected_literal: "15".into(),
+        },
+    ];
+
+    for test_case in test_cases {
+        let program = parse(test_case.source_code);
+        assert_eq!(1, program.statements.len());
+
+        let first_statement = program.statements.get(0).unwrap();
+        if let Statement::Expression(Expression::PrefixExpression { right: expression, operator }) = first_statement {
+            assert_eq!(&test_case.operator, operator);
+            assert_is_integer_expression(expression, test_case.expected_literal)
+        } else {
+            panic!("statement is not an expression containing a prefix expression, got: {}", first_statement)
+        }
     }
 }
 
