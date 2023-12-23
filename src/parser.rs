@@ -5,7 +5,7 @@ use crate::token::{Token, token_name, token_value};
 
 type PrefixParseFunction = fn(&mut Parser) -> Option<Expression>;
 
-type InfixParseFunction = fn(&mut Parser, Expression) -> Expression;
+type InfixParseFunction = fn(&mut Parser, Expression) -> Option<Expression>;
 
 pub struct Parser {
     lexer: Lexer,
@@ -16,9 +16,10 @@ pub struct Parser {
     token_to_infix_parse_functions_map: HashMap<i8, InfixParseFunction>,
 }
 
-enum Precedence {
+pub enum Precedence {
     Lowest,
     Equals,
+    LessGreater,
     Sum,
     Product,
     Prefix,
@@ -26,14 +27,15 @@ enum Precedence {
 }
 
 impl Precedence {
-    fn value(&self) -> u8 {
+    pub fn value(&self) -> u8 {
         match self {
             Precedence::Lowest => 0,
             Precedence::Equals => 1,
-            Precedence::Sum => 2,
-            Precedence::Product => 3,
-            Precedence::Prefix => 4,
-            Precedence::Call => 5
+            Precedence::LessGreater => 2,
+            Precedence::Sum => 3,
+            Precedence::Product => 4,
+            Precedence::Prefix => 5,
+            Precedence::Call => 6,
         }
     }
 }
@@ -49,6 +51,7 @@ pub fn new(lexer: Lexer) -> Parser {
     };
 
     register_prefix_parse_functions(&mut parser);
+    register_infix_parse_functions(&mut parser);
 
     parser.next_token_n_times(2);
 
@@ -67,6 +70,11 @@ fn register_prefix_parse_functions(parser: &mut Parser) {
     );
 
     parser.token_to_prefix_parse_functions_map.insert(
+        token_value::PLUS,
+        |parser| { parser.parse_prefix_expression() },
+    );
+
+    parser.token_to_prefix_parse_functions_map.insert(
         token_value::MINUS,
         |parser| { parser.parse_prefix_expression() },
     );
@@ -76,6 +84,49 @@ fn register_prefix_parse_functions(parser: &mut Parser) {
         |parser| { parser.parse_prefix_expression() },
     );
 }
+
+fn register_infix_parse_functions(parser: &mut Parser) {
+    parser.token_to_infix_parse_functions_map.insert(
+        token_value::PLUS,
+        |parser, left| { parser.parse_infix_expression(left) },
+    );
+
+    parser.token_to_infix_parse_functions_map.insert(
+        token_value::MINUS,
+        |parser, left| { parser.parse_infix_expression(left) },
+    );
+
+    parser.token_to_infix_parse_functions_map.insert(
+        token_value::SLASH,
+        |parser, left| { parser.parse_infix_expression(left) },
+    );
+
+    parser.token_to_infix_parse_functions_map.insert(
+        token_value::ASTERISK,
+        |parser, left| { parser.parse_infix_expression(left) },
+    );
+
+    parser.token_to_infix_parse_functions_map.insert(
+        token_value::EQUAL,
+        |parser, left| { parser.parse_infix_expression(left) },
+    );
+
+    parser.token_to_infix_parse_functions_map.insert(
+        token_value::NOT_EQUAL,
+        |parser, left| { parser.parse_infix_expression(left) },
+    );
+
+    parser.token_to_infix_parse_functions_map.insert(
+        token_value::LESS_THAN,
+        |parser, left| { parser.parse_infix_expression(left) },
+    );
+
+    parser.token_to_infix_parse_functions_map.insert(
+        token_value::GREATER_THAN,
+        |parser, left| { parser.parse_infix_expression(left) },
+    );
+}
+
 
 impl Parser {
     pub fn next_token(&mut self) {
@@ -161,15 +212,25 @@ impl Parser {
     }
 
     fn parse_expression_precedence(&mut self, precedence: Precedence) -> Option<Expression> {
-        let optional_prefix_parse_function = self.token_to_prefix_parse_functions_map.get(&self.current_token.clone().value());
-        return if let Some(prefix_parse_function) = optional_prefix_parse_function {
-            prefix_parse_function(self)
-        } else {
-            let message =
-                format!("Parsing error, no prefix parsing function defined for {:?}", self.current_token.clone());
+        let prefix_parse_function = self.token_to_prefix_parse_functions_map.get(&self.current_token.value());
+        if None == prefix_parse_function {
+            let message = format!("Parsing error, no prefix parsing function defined for {:?}", self.current_token.clone());
             self.errors.push(message);
-            None
-        };
+            return None;
+        }
+
+        let mut left_expression = prefix_parse_function?(self);
+        while !(self.peek_token == Token::Semicolon) && precedence.value() < self.get_peek_token_precedence().value() {
+            let token_to_infix_parse_fn_map = self.token_to_infix_parse_functions_map.clone();
+            let infix = token_to_infix_parse_fn_map.get(&self.peek_token.value());
+            if infix == None {
+                return left_expression;
+            }
+            self.next_token();
+            left_expression = infix?(self, left_expression?);
+        }
+
+        return left_expression;
     }
 
     fn parse_integer_literal_expression(&mut self) -> Option<Expression> {
@@ -201,6 +262,27 @@ impl Parser {
             operator,
             right: Box::new(right),
         });
+    }
+
+    fn parse_infix_expression(&mut self, left: Expression) -> Option<Expression> {
+        let operator = self.current_token.literal()?;
+        let precedence = self.get_current_token_precedence();
+        self.next_token();
+        let right = self.parse_expression_precedence(precedence)?;
+
+        return Some(Expression::InfixExpression {
+            operator,
+            left: Box::from(left),
+            right: Box::new(right),
+        });
+    }
+
+    fn get_peek_token_precedence(&mut self) -> Precedence {
+        self.peek_token.precedence().unwrap_or(Precedence::Lowest)
+    }
+
+    fn get_current_token_precedence(&mut self) -> Precedence {
+        self.current_token.precedence().unwrap_or(Precedence::Lowest)
     }
 
     fn add_err(&mut self, expected: &str, value: Token) {

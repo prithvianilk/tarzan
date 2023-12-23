@@ -83,13 +83,13 @@ fn test_integer_literal_expression() {
 
     let first_statement = program.statements.get(0).unwrap();
     if let Statement::Expression(expression) = first_statement {
-        assert_is_integer_expression(expression, "5".into());
+        assert_is_integer_expression("5".into(), expression);
     } else {
         panic!("statement is not an expression, got: {}", first_statement)
     }
 }
 
-fn assert_is_integer_expression(expression: &Expression, expected_literal: String) {
+fn assert_is_integer_expression(expected_literal: String, expression: &Expression) {
     let expected_value = expected_literal.parse::<i64>().unwrap();
 
     if let Expression::IntegerLiteral { token, value } = expression {
@@ -128,9 +128,91 @@ fn test_prefix_expressions() {
         let first_statement = program.statements.get(0).unwrap();
         if let Statement::Expression(Expression::PrefixExpression { right: expression, operator }) = first_statement {
             assert_eq!(&test_case.operator, operator);
-            assert_is_integer_expression(expression, test_case.expected_literal)
+            assert_is_integer_expression(test_case.expected_literal, expression);
         } else {
-            panic!("statement is not an expression containing a prefix expression, got: {}", first_statement)
+            panic!("statement is not an expression containing a prefix expression, got: {}", first_statement);
+        }
+    }
+}
+
+#[test]
+fn test_infix_expressions() {
+    #[derive(Debug)]
+    struct InfixExpressionTestCase {
+        source_code: String,
+        operator: String,
+        expected_left_literal: String,
+        expected_right_literal: String,
+    }
+
+    let test_cases = vec![
+        InfixExpressionTestCase {
+            source_code: "5 > 5;".into(),
+            operator: ">".into(),
+            expected_left_literal: "5".into(),
+            expected_right_literal: "5".into(),
+        },
+        InfixExpressionTestCase {
+            source_code: "5 + 5;".into(),
+            operator: "+".into(),
+            expected_left_literal: "5".into(),
+            expected_right_literal: "5".into(),
+        },
+        InfixExpressionTestCase {
+            source_code: "5 - 5;".into(),
+            operator: "-".into(),
+            expected_left_literal: "5".into(),
+            expected_right_literal: "5".into(),
+        },
+        InfixExpressionTestCase {
+            source_code: "5 * 5;".into(),
+            operator: "*".into(),
+            expected_left_literal: "5".into(),
+            expected_right_literal: "5".into(),
+        },
+        InfixExpressionTestCase {
+            source_code: "5 / 5;".into(),
+            operator: "/".into(),
+            expected_left_literal: "5".into(),
+            expected_right_literal: "5".into(),
+        },
+        InfixExpressionTestCase {
+            source_code: "5 > 5;".into(),
+            operator: ">".into(),
+            expected_left_literal: "5".into(),
+            expected_right_literal: "5".into(),
+        },
+        InfixExpressionTestCase {
+            source_code: "5 < 5;".into(),
+            operator: "<".into(),
+            expected_left_literal: "5".into(),
+            expected_right_literal: "5".into(),
+        },
+        InfixExpressionTestCase {
+            source_code: "5 == 5;".into(),
+            operator: "==".into(),
+            expected_left_literal: "5".into(),
+            expected_right_literal: "5".into(),
+        },
+        InfixExpressionTestCase {
+            source_code: "5 != 5;".into(),
+            operator: "!=".into(),
+            expected_left_literal: "5".into(),
+            expected_right_literal: "5".into(),
+        },
+    ];
+
+    for test_case in test_cases {
+        let program = parse(test_case.source_code);
+        assert_eq!(1, program.statements.len());
+
+        let first_statement = program.statements.get(0).unwrap();
+        if let Statement::Expression(Expression::InfixExpression { left, right, operator }) = first_statement {
+            assert_eq!(&test_case.operator, operator);
+            assert_is_integer_expression(test_case.expected_left_literal, left);
+            assert_is_integer_expression(test_case.expected_right_literal, right);
+        } else {
+            panic!("statement is not an expression containing an infix expression, got: {}", first_statement);
         }
     }
 }
