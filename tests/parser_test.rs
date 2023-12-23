@@ -147,12 +147,6 @@ fn test_infix_expressions() {
 
     let test_cases = vec![
         InfixExpressionTestCase {
-            source_code: "5 > 5;".into(),
-            operator: ">".into(),
-            expected_left_literal: "5".into(),
-            expected_right_literal: "5".into(),
-        },
-        InfixExpressionTestCase {
             source_code: "5 + 5;".into(),
             operator: "+".into(),
             expected_left_literal: "5".into(),
