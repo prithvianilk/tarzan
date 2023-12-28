@@ -215,22 +215,29 @@ fn test_infix_expressions_with_3_operands() {
     #[derive(Debug)]
     struct InfixExpressionTestCase {
         source_code: String,
-        expected_statements_string: String,
+        expected_expression_string: String,
     }
 
     let test_cases = vec![
         InfixExpressionTestCase {
             source_code: "1 + 2 * 3;".to_string(),
-            expected_statements_string: "InfixExpression { \
+            expected_expression_string: "InfixExpression { \
             operator: \"+\", \
             left: IntegerLiteral { token: Int { literal: \"1\" }, value: 1 }, \
             right: InfixExpression { operator: \"*\", left: IntegerLiteral { token: Int { literal: \"2\" }, value: 2 }, right: IntegerLiteral { token: Int { literal: \"3\" }, value: 3 } } }".into(),
         },
         InfixExpressionTestCase {
             source_code: "1 * 2 + 3;".to_string(),
-            expected_statements_string: "InfixExpression { \
+            expected_expression_string: "InfixExpression { \
             operator: \"+\", \
             left: InfixExpression { operator: \"*\", left: IntegerLiteral { token: Int { literal: \"1\" }, value: 1 }, right: IntegerLiteral { token: Int { literal: \"2\" }, value: 2 } }, \
+            right: IntegerLiteral { token: Int { literal: \"3\" }, value: 3 } }".into(),
+        },
+        InfixExpressionTestCase {
+            source_code: "1 + 2 + 3;".to_string(),
+            expected_expression_string: "InfixExpression { \
+            operator: \"+\", \
+            left: InfixExpression { operator: \"+\", left: IntegerLiteral { token: Int { literal: \"1\" }, value: 1 }, right: IntegerLiteral { token: Int { literal: \"2\" }, value: 2 } }, \
             right: IntegerLiteral { token: Int { literal: \"3\" }, value: 3 } }".into(),
         },
     ];
@@ -241,7 +248,41 @@ fn test_infix_expressions_with_3_operands() {
         assert_eq!(1, program.statements.len());
 
         let first_statement = program.statements.get(0).unwrap();
-        assert_eq!(test_case.expected_statements_string, first_statement.to_string());
+        assert_eq!(test_case.expected_expression_string, first_statement.to_string());
+    }
+}
+
+#[test]
+fn test_boolean_parsing() {
+    struct BooleanStatementTestCase {
+        source_code: String,
+        expected_expression_string: String,
+    }
+
+    let test_cases = vec![
+        BooleanStatementTestCase {
+            source_code: "true;".into(),
+            expected_expression_string: "Boolean { token: True, value: true }".into(),
+        },
+        BooleanStatementTestCase {
+            source_code: "false;".into(),
+            expected_expression_string: "Boolean { token: False, value: false }".into(),
+        },
+        BooleanStatementTestCase {
+            source_code: "3 > 5 == false;".into(),
+            expected_expression_string: "InfixExpression { \
+            operator: \"==\", \
+            left: InfixExpression { operator: \">\", left: IntegerLiteral { token: Int { literal: \"3\" }, value: 3 }, right: IntegerLiteral { token: Int { literal: \"5\" }, value: 5 } }, \
+            right: Boolean { token: False, value: false } }".into(),
+        },
+    ];
+
+    for test_case in test_cases {
+        let program = parse(test_case.source_code);
+        assert_eq!(1, program.statements.len());
+
+        let first_statement = program.statements.get(0).unwrap();
+        assert_eq!(test_case.expected_expression_string, first_statement.to_string());
     }
 }
 

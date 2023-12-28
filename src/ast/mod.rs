@@ -1,4 +1,4 @@
-use std::fmt::{Display, Formatter, Pointer, write};
+use std::fmt::{Display, Formatter, Pointer};
 use crate::token;
 
 pub enum Statement {
@@ -20,6 +20,7 @@ impl Display for Statement {
 #[derive(Debug)]
 pub enum Expression {
     Identifier(token::Token),
+    Boolean { token: token::Token, value: bool },
     IntegerLiteral { token: token::Token, value: i64 },
     PrefixExpression { operator: String, right: Box<Expression> },
     InfixExpression { operator: String, left: Box<Expression>, right: Box<Expression> },

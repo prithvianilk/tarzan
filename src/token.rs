@@ -1,4 +1,5 @@
 use crate::parser::Precedence;
+use crate::token::token_value::BOOL;
 
 #[derive(PartialEq, Debug, Clone, Eq, Hash)]
 pub enum Token {
@@ -43,6 +44,7 @@ pub mod token_value {
     pub const NOT_EQUAL: i8 = 8;
     pub const LESS_THAN: i8 = 9;
     pub const GREATER_THAN: i8 = 10;
+    pub const BOOL: i8 = 11;
     pub const ILLEGAL: i8 = -1;
 }
 
@@ -66,6 +68,7 @@ impl Token {
             Token::NotEqual => token_value::NOT_EQUAL,
             Token::LessThan => token_value::LESS_THAN,
             Token::GreaterThan => token_value::GREATER_THAN,
+            Token::True | Token::False => BOOL,
             _ => token_value::ILLEGAL,
         }
     }

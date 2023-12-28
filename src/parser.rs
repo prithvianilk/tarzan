@@ -65,6 +65,11 @@ fn register_prefix_parse_functions(parser: &mut Parser) {
     );
 
     parser.token_to_prefix_parse_functions_map.insert(
+        token_value::BOOL,
+        |parser| { parser.parse_boolean_expression() },
+    );
+
+    parser.token_to_prefix_parse_functions_map.insert(
         token_value::INT,
         |parser| { parser.parse_integer_literal_expression() },
     );
@@ -249,6 +254,18 @@ impl Parser {
         }
 
         return None;
+    }
+
+    fn parse_boolean_expression(&mut self) -> Option<Expression> {
+        let value = match self.current_token {
+            Token::False => Some(false),
+            Token::True => Some(true),
+            _ => None
+        }?;
+        Some(Expression::Boolean {
+            token: self.current_token.clone(),
+            value,
+        })
     }
 
     fn parse_prefix_expression(&mut self) -> Option<Expression> {
