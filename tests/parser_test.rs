@@ -1,3 +1,4 @@
+use std::ops::Deref;
 use tarzan::{lexer, parser};
 use tarzan::ast::{Statement, Expression, Program};
 use tarzan::parser::Parser;
@@ -207,6 +208,56 @@ fn test_infix_expressions() {
             assert_is_integer_expression(test_case.expected_right_literal, right);
         } else {
             panic!("statement is not an expression containing an infix expression, got: {}", first_statement);
+        }
+    }
+}
+
+#[test]
+fn test_infix_expressions_with_3_operands() {
+    #[derive(Debug)]
+    struct InfixExpressionTestCase {
+        source_code: String,
+        left_operator: String,
+        right_operator: String,
+        left_literal: String,
+        middle_literal: String,
+        right_literal: String,
+    }
+
+    let test_cases = vec![
+        InfixExpressionTestCase {
+            source_code: "1 + 2 * 3;".to_string(),
+            left_operator: "+".into(),
+            right_operator: "*".into(),
+            left_literal: "1".into(),
+            middle_literal: "2".into(),
+            right_literal: "3".into(),
+        }
+    ];
+
+
+    for test_case in test_cases {
+        let program = parse(test_case.source_code);
+        assert_eq!(1, program.statements.len());
+
+        let first_statement = program.statements.get(0).unwrap();
+        if let Statement::Expression(
+            Expression::InfixExpression {
+                left,
+                right,
+                operator: left_operator
+            }
+        ) = first_statement {
+            assert_eq!(&test_case.left_operator, left_operator);
+            assert_is_integer_expression(test_case.left_literal, left);
+
+            if let Expression::InfixExpression { left, operator: right_operator, right } = &right.deref() {
+                assert_eq!(test_case.right_operator, *right_operator);
+                assert_is_integer_expression(test_case.middle_literal, left);
+                assert_is_integer_expression(test_case.right_literal, right);
+            }
+        } else {
+            panic!("statement is invalid {}", first_statement);
         }
     }
 }
