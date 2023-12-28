@@ -217,22 +217,24 @@ fn test_infix_expressions_with_3_operands() {
     #[derive(Debug)]
     struct InfixExpressionTestCase {
         source_code: String,
-        left_operator: String,
-        right_operator: String,
-        left_literal: String,
-        middle_literal: String,
-        right_literal: String,
+        expected_statements_string: String,
     }
 
     let test_cases = vec![
         InfixExpressionTestCase {
             source_code: "1 + 2 * 3;".to_string(),
-            left_operator: "+".into(),
-            right_operator: "*".into(),
-            left_literal: "1".into(),
-            middle_literal: "2".into(),
-            right_literal: "3".into(),
-        }
+            expected_statements_string: "InfixExpression { \
+            operator: \"+\", \
+            left: IntegerLiteral { token: Int { literal: \"1\" }, value: 1 }, \
+            right: InfixExpression { operator: \"*\", left: IntegerLiteral { token: Int { literal: \"2\" }, value: 2 }, right: IntegerLiteral { token: Int { literal: \"3\" }, value: 3 } } }".into(),
+        },
+        InfixExpressionTestCase {
+            source_code: "1 * 2 + 3;".to_string(),
+            expected_statements_string: "InfixExpression { \
+            operator: \"+\", \
+            left: InfixExpression { operator: \"*\", left: IntegerLiteral { token: Int { literal: \"1\" }, value: 1 }, right: IntegerLiteral { token: Int { literal: \"2\" }, value: 2 } }, \
+            right: IntegerLiteral { token: Int { literal: \"3\" }, value: 3 } }".into(),
+        },
     ];
 
 
@@ -241,24 +243,7 @@ fn test_infix_expressions_with_3_operands() {
         assert_eq!(1, program.statements.len());
 
         let first_statement = program.statements.get(0).unwrap();
-        if let Statement::Expression(
-            Expression::InfixExpression {
-                left,
-                right,
-                operator: left_operator
-            }
-        ) = first_statement {
-            assert_eq!(&test_case.left_operator, left_operator);
-            assert_is_integer_expression(test_case.left_literal, left);
-
-            if let Expression::InfixExpression { left, operator: right_operator, right } = &right.deref() {
-                assert_eq!(test_case.right_operator, *right_operator);
-                assert_is_integer_expression(test_case.middle_literal, left);
-                assert_is_integer_expression(test_case.right_literal, right);
-            }
-        } else {
-            panic!("statement is invalid {}", first_statement);
-        }
+        assert_eq!(test_case.expected_statements_string, first_statement.to_string());
     }
 }
 
