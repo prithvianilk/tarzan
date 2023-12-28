@@ -1,4 +1,3 @@
-use std::ops::Deref;
 use tarzan::{lexer, parser};
 use tarzan::ast::{Statement, Expression, Program};
 use tarzan::parser::Parser;
@@ -141,59 +140,64 @@ fn test_infix_expressions() {
     #[derive(Debug)]
     struct InfixExpressionTestCase {
         source_code: String,
-        operator: String,
-        expected_left_literal: String,
-        expected_right_literal: String,
+        expected_expression_string: String,
     }
 
     let test_cases = vec![
         InfixExpressionTestCase {
             source_code: "5 + 5;".into(),
-            operator: "+".into(),
-            expected_left_literal: "5".into(),
-            expected_right_literal: "5".into(),
+            expected_expression_string: "InfixExpression { \
+            operator: \"+\", \
+            left: IntegerLiteral { token: Int { literal: \"5\" }, value: 5 }, \
+            right: IntegerLiteral { token: Int { literal: \"5\" }, value: 5 } }".into(),
         },
         InfixExpressionTestCase {
             source_code: "5 - 5;".into(),
-            operator: "-".into(),
-            expected_left_literal: "5".into(),
-            expected_right_literal: "5".into(),
+            expected_expression_string: "InfixExpression { \
+            operator: \"-\", \
+            left: IntegerLiteral { token: Int { literal: \"5\" }, value: 5 }, \
+            right: IntegerLiteral { token: Int { literal: \"5\" }, value: 5 } }".into(),
         },
         InfixExpressionTestCase {
             source_code: "5 * 5;".into(),
-            operator: "*".into(),
-            expected_left_literal: "5".into(),
-            expected_right_literal: "5".into(),
+            expected_expression_string: "InfixExpression { \
+            operator: \"*\", \
+            left: IntegerLiteral { token: Int { literal: \"5\" }, value: 5 }, \
+            right: IntegerLiteral { token: Int { literal: \"5\" }, value: 5 } }".into(),
         },
         InfixExpressionTestCase {
             source_code: "5 / 5;".into(),
-            operator: "/".into(),
-            expected_left_literal: "5".into(),
-            expected_right_literal: "5".into(),
+            expected_expression_string: "InfixExpression { \
+            operator: \"/\", left: IntegerLiteral { token: Int { literal: \"5\" }, value: 5 }, \
+            right: IntegerLiteral { token: Int { literal: \"5\" }, value: 5 } }".into(),
         },
         InfixExpressionTestCase {
             source_code: "5 > 5;".into(),
-            operator: ">".into(),
-            expected_left_literal: "5".into(),
-            expected_right_literal: "5".into(),
+            expected_expression_string: "InfixExpression { \
+            operator: \">\", \
+            left: IntegerLiteral { token: Int { literal: \"5\" }, value: 5 }, \
+            right: IntegerLiteral { token: Int { literal: \"5\" }, value: 5 } }".into(),
         },
         InfixExpressionTestCase {
             source_code: "5 < 5;".into(),
-            operator: "<".into(),
-            expected_left_literal: "5".into(),
-            expected_right_literal: "5".into(),
+            expected_expression_string: "InfixExpression { \
+            operator: \"<\", \
+            left: IntegerLiteral { token: Int { literal: \"5\" }, value: 5 }, \
+            right: IntegerLiteral { token: Int { literal: \"5\" }, value: 5 } }".into(),
         },
         InfixExpressionTestCase {
             source_code: "5 == 5;".into(),
-            operator: "==".into(),
-            expected_left_literal: "5".into(),
-            expected_right_literal: "5".into(),
+            expected_expression_string: "InfixExpression { \
+            operator: \"==\", \
+            left: IntegerLiteral { token: Int { literal: \"5\" }, value: 5 }, \
+            right: IntegerLiteral { token: Int { literal: \"5\" }, value: 5 } }".into(),
         },
         InfixExpressionTestCase {
             source_code: "5 != 5;".into(),
-            operator: "!=".into(),
-            expected_left_literal: "5".into(),
-            expected_right_literal: "5".into(),
+            expected_expression_string: "InfixExpression { \
+            operator: \"!=\", \
+            left: IntegerLiteral { token: Int { literal: \"5\" }, value: 5 }, \
+            right: IntegerLiteral { token: Int { literal: \"5\" }, value: 5 } }".into(),
         },
     ];
 
@@ -202,13 +206,7 @@ fn test_infix_expressions() {
         assert_eq!(1, program.statements.len());
 
         let first_statement = program.statements.get(0).unwrap();
-        if let Statement::Expression(Expression::InfixExpression { left, right, operator }) = first_statement {
-            assert_eq!(&test_case.operator, operator);
-            assert_is_integer_expression(test_case.expected_left_literal, left);
-            assert_is_integer_expression(test_case.expected_right_literal, right);
-        } else {
-            panic!("statement is not an expression containing an infix expression, got: {}", first_statement);
-        }
+        assert_eq!(test_case.expected_expression_string, first_statement.to_string());
     }
 }
 
