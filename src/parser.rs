@@ -88,6 +88,16 @@ fn register_prefix_parse_functions(parser: &mut Parser) {
         token_value::BANG,
         |parser| { parser.parse_prefix_expression() },
     );
+
+    parser.token_to_prefix_parse_functions_map.insert(
+        token_value::LESS_THAN,
+        |parser| { parser.parse_prefix_expression() },
+    );
+
+    parser.token_to_prefix_parse_functions_map.insert(
+        token_value::LEFT_PARENTHESIS,
+        |parser| { parser.parse_grouped_expression() },
+    );
 }
 
 fn register_infix_parse_functions(parser: &mut Parser) {
@@ -279,6 +289,20 @@ impl Parser {
             operator,
             right: Box::new(right),
         });
+    }
+
+
+    fn parse_grouped_expression(&mut self) -> Option<Expression> {
+        self.next_token();
+        let expression = self.parse_expression_precedence(Precedence::Lowest);
+
+        match self.peek_token == Token::RightParenthesis {
+            true => {
+                self.next_token();
+                return expression;
+            }
+            false => None
+        }
     }
 
     fn parse_infix_expression(&mut self, left: Expression) -> Option<Expression> {

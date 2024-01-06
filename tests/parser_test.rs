@@ -243,6 +243,51 @@ fn test_infix_expressions() {
             left: IntegerLiteral { token: Int { literal: \"5\" }, value: 5 }, \
             right: IntegerLiteral { token: Int { literal: \"5\" }, value: 5 } }".into(),
         },
+        InfixExpressionTestCase {
+            source_code: "1 + (2 + 3) + 4;".into(),
+            expected_expression_string: "InfixExpression { \
+            operator: \"+\", \
+            left: InfixExpression { operator: \"+\", \
+                left: IntegerLiteral { token: Int { literal: \"1\" }, value: 1 }, \
+                right: InfixExpression { operator: \"+\", \
+                    left: IntegerLiteral { token: Int { literal: \"2\" }, value: 2 }, \
+                    right: IntegerLiteral { token: Int { literal: \"3\" }, value: 3 } } }, \
+            right: IntegerLiteral { token: Int { literal: \"4\" }, value: 4 } }".into(),
+        },
+        InfixExpressionTestCase {
+            source_code: "(5 + 5) * 2;".into(),
+            expected_expression_string: "InfixExpression { \
+            operator: \"*\", \
+            left: InfixExpression { operator: \"+\", \
+                left: IntegerLiteral { token: Int { literal: \"5\" }, value: 5 }, \
+                right: IntegerLiteral { token: Int { literal: \"5\" }, value: 5 } }, \
+            right: IntegerLiteral { token: Int { literal: \"2\" }, value: 2 } }".into(),
+        },
+        InfixExpressionTestCase {
+            source_code: "2 / (5 + 5);".into(),
+            expected_expression_string: "InfixExpression { \
+            operator: \"/\", \
+            left: IntegerLiteral { token: Int { literal: \"2\" }, value: 2 }, \
+            right: InfixExpression { operator: \"+\", \
+                left: IntegerLiteral { token: Int { literal: \"5\" }, value: 5 }, \
+                right: IntegerLiteral { token: Int { literal: \"5\" }, value: 5 } } }".into(),
+        },
+        InfixExpressionTestCase {
+            source_code: "-(5 + 5)".into(),
+            expected_expression_string: "PrefixExpression { \
+            operator: \"-\", \
+            right: InfixExpression { operator: \"+\", \
+                left: IntegerLiteral { token: Int { literal: \"5\" }, value: 5 }, \
+                right: IntegerLiteral { token: Int { literal: \"5\" }, value: 5 } } }".into(),
+        },
+        InfixExpressionTestCase {
+            source_code: "!(true == true)".into(),
+            expected_expression_string: "PrefixExpression { \
+            operator: \"!\", \
+            right: InfixExpression { operator: \"==\", \
+                left: Boolean { token: True, value: true }, \
+                right: Boolean { token: True, value: true } } }".into(),
+        },
     ];
 
     for test_case in test_cases {
