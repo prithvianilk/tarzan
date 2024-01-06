@@ -136,6 +136,50 @@ fn test_prefix_expressions() {
 }
 
 #[test]
+fn test_prefix_boolean_expressions() {
+    struct PrefixExpressionTestCase {
+        source_code: String,
+        operator: String,
+        expected_token: Token,
+    }
+
+    let test_cases = vec![
+        PrefixExpressionTestCase {
+            source_code: "!false;".into(),
+            operator: "!".into(),
+            expected_token: Token::False,
+        },
+        PrefixExpressionTestCase {
+            source_code: "!true;".into(),
+            operator: "!".into(),
+            expected_token: Token::True,
+        },
+    ];
+
+    for test_case in test_cases {
+        let program = parse(test_case.source_code);
+        assert_eq!(1, program.statements.len());
+
+        let first_statement = program.statements.get(0).unwrap();
+        if let Statement::Expression(Expression::PrefixExpression { right: expression, operator }) = first_statement {
+            assert_eq!(&test_case.operator, operator);
+            assert_is_boolean_expression(test_case.expected_token, expression);
+        } else {
+            panic!("statement is not an expression containing a prefix expression, got: {}", first_statement);
+        }
+    }
+}
+
+fn assert_is_boolean_expression(expected_token: Token, expression: &Expression) {
+    match expression {
+        Expression::Boolean { token, .. } => {
+            assert_eq!(expected_token, *token)
+        }
+        _ => panic!("expression is not of boolean type, got: {:?}", expression)
+    }
+}
+
+#[test]
 fn test_infix_expressions() {
     #[derive(Debug)]
     struct InfixExpressionTestCase {
