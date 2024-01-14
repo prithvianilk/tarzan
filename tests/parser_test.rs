@@ -375,6 +375,45 @@ fn test_boolean_parsing() {
     }
 }
 
+#[test]
+fn test_if_expression_parsing() {
+    struct IfExpressionTestCase {
+        source_code: String,
+        expected_expression_string: String,
+    }
+
+    let test_cases = vec![
+        IfExpressionTestCase {
+            source_code: "if (x < y) { x }".into(),
+            expected_expression_string: "\
+            IfExpression { \
+                token: If, \
+                condition: InfixExpression { operator: \"<\", left: Identifier(Identifier { literal: \"x\" }), right: Identifier(Identifier { literal: \"y\" }) }, \
+                consequence: Some(BlockStatement { statements: [Expression(Identifier(Identifier { literal: \"x\" }))] }), \
+                alternative: None \
+            }".into(),
+        },
+        IfExpressionTestCase {
+            source_code: "if (x < y) { x } else { y }".into(),
+            expected_expression_string: "\
+            IfExpression { \
+                token: If, \
+                condition: InfixExpression { operator: \"<\", left: Identifier(Identifier { literal: \"x\" }), right: Identifier(Identifier { literal: \"y\" }) }, \
+                consequence: Some(BlockStatement { statements: [Expression(Identifier(Identifier { literal: \"x\" }))] }), \
+                alternative: Some(BlockStatement { statements: [Expression(Identifier(Identifier { literal: \"y\" }))] }) \
+            }".into(),
+        },
+    ];
+
+
+    for test_case in test_cases {
+        let program = parse(test_case.source_code);
+        assert_eq!(1, program.statements.len());
+        let first_statement = program.statements.get(0).unwrap();
+        assert_eq!(test_case.expected_expression_string, first_statement.to_string());
+    }
+}
+
 fn assert_zero_parser_errors(parser: &Parser) {
     if parser.errors.is_empty() {
         return;

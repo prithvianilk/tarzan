@@ -1,6 +1,7 @@
 use std::fmt::{Display, Formatter};
 use crate::token;
 
+#[derive(Debug)]
 pub enum Statement {
     Let(LetStatement),
     Return(Expression),
@@ -24,13 +25,19 @@ pub enum Expression {
     IntegerLiteral { token: token::Token, value: i64 },
     PrefixExpression { operator: String, right: Box<Expression> },
     InfixExpression { operator: String, left: Box<Expression>, right: Box<Expression> },
+    IfExpression { token: token::Token, condition: Box<Expression>, consequence: Option<BlockStatement>, alternative: Option<BlockStatement> },
 }
 
+#[derive(Debug)]
+pub struct BlockStatement {
+    pub statements: Vec<Statement>,
+}
 
 pub struct Program {
     pub statements: Vec<Statement>,
 }
 
+#[derive(Debug)]
 pub struct LetStatement {
     pub identifier_name: String,
     pub value: Expression,

@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use crate::lexer::Lexer;
-use crate::ast::{Expression, LetStatement, Program, Statement};
+use crate::ast::{BlockStatement, Expression, LetStatement, Program, Statement};
 use crate::token::{Token, token_name, token_value};
 
 type PrefixParseFunction = fn(&mut Parser) -> Option<Expression>;
@@ -97,6 +97,11 @@ fn register_prefix_parse_functions(parser: &mut Parser) {
     parser.token_to_prefix_parse_functions_map.insert(
         token_value::LEFT_PARENTHESIS,
         |parser| { parser.parse_grouped_expression() },
+    );
+
+    parser.token_to_prefix_parse_functions_map.insert(
+        token_value::IF,
+        |parser| { parser.parse_if_expression() },
     );
 }
 
@@ -316,6 +321,69 @@ impl Parser {
             left: Box::from(left),
             right: Box::new(right),
         });
+    }
+
+    fn parse_if_expression(&mut self) -> Option<Expression> {
+        let current_token = self.current_token.clone();
+
+        if self.peek_token != Token::LeftParenthesis {
+            return None;
+        }
+        self.next_token_n_times(2);
+
+        let condition = self.parse_expression_precedence(Precedence::Lowest)?;
+
+        if self.peek_token != Token::RightParenthesis {
+            return None;
+        }
+        self.next_token();
+
+        if self.peek_token != Token::LeftBracket {
+            return None;
+        }
+        self.next_token();
+
+        let consequence = self.parse_block_statement();
+
+        if self.peek_token != Token::Else {
+            return Some(Expression::IfExpression {
+                token: current_token,
+                condition: Box::new(condition),
+                consequence: Some(consequence),
+                alternative: None,
+            });
+        }
+        self.next_token();
+
+        if self.peek_token != Token::LeftBracket {
+            return None;
+        }
+        self.next_token();
+
+        let alternative = self.parse_block_statement();
+
+        return Some(Expression::IfExpression {
+            token: current_token,
+            condition: Box::new(condition),
+            consequence: Some(consequence),
+            alternative: Some(alternative),
+        });
+    }
+
+    fn parse_block_statement(&mut self) -> BlockStatement {
+        let mut statements = Vec::new();
+        self.next_token();
+
+        while self.current_token != Token::RightBracket && self.current_token != Token::Eof {
+            if let Some(statement) = self.parse_statement() {
+                statements.push(statement);
+            }
+            self.next_token();
+        }
+
+        return BlockStatement {
+            statements
+        };
     }
 
     fn get_peek_token_precedence(&mut self) -> Precedence {
