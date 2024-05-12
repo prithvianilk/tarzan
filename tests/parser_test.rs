@@ -414,6 +414,58 @@ fn test_if_expression_parsing() {
     }
 }
 
+#[test]
+fn test_function_literal_parsing() {
+    struct FunctionLiteralTestCase {
+        source_code: String,
+        expected_expression_string: String,
+    }
+
+    let test_cases = vec![
+        FunctionLiteralTestCase {
+            source_code: "fn() {}".into(),
+            expected_expression_string: "Function { \
+            token: Function, \
+            parameters: [], \
+            body: BlockStatement { statements: [] } }".into(),
+        },
+        FunctionLiteralTestCase {
+            source_code: "fn(x) {}".into(),
+            expected_expression_string: "Function { \
+            token: Function, \
+            parameters: [\
+            Identifier(Identifier { literal: \"x\" })], \
+            body: BlockStatement { statements: [] } }".into(),
+        },
+        FunctionLiteralTestCase {
+            source_code: "fn(x, y) {}".into(),
+            expected_expression_string: "Function { \
+            token: Function, \
+            parameters: [\
+            Identifier(Identifier { literal: \"x\" }), \
+            Identifier(Identifier { literal: \"y\" })], \
+            body: BlockStatement { statements: [] } }".into(),
+        },
+        FunctionLiteralTestCase {
+            source_code: "fn(x, y) { x + y; }".into(),
+            expected_expression_string: "Function { \
+            token: Function, \
+            parameters: [\
+            Identifier(Identifier { literal: \"x\" }), \
+            Identifier(Identifier { literal: \"y\" })], \
+            body: BlockStatement { statements: [Expression(InfixExpression { operator: \"+\", left: Identifier(Identifier { literal: \"x\" }), right: Identifier(Identifier { literal: \"y\" }) })] } }".into(),
+        },
+    ];
+
+
+    for test_case in test_cases {
+        let program = parse(test_case.source_code);
+        assert_eq!(1, program.statements.len());
+        let first_statement = program.statements.get(0).unwrap();
+        assert_eq!(test_case.expected_expression_string, first_statement.to_string());
+    }
+}
+
 fn assert_zero_parser_errors(parser: &Parser) {
     if parser.errors.is_empty() {
         return;

@@ -1,5 +1,5 @@
 use crate::parser::Precedence;
-use crate::token::token_value::{BOOL, IF, LEFT_PARENTHESIS};
+use crate::token::token_value::{BOOL, FUNCTION, IF, LEFT_PARENTHESIS};
 
 #[derive(PartialEq, Debug, Clone, Eq, Hash)]
 pub enum Token {
@@ -47,6 +47,7 @@ pub mod token_value {
     pub const BOOL: i8 = 11;
     pub const LEFT_PARENTHESIS: i8 = 12;
     pub const IF: i8 = 13;
+    pub const FUNCTION: i8 = 14;
     pub const ILLEGAL: i8 = -1;
 }
 
@@ -73,6 +74,7 @@ impl Token {
             Token::True | Token::False => BOOL,
             Token::LeftParenthesis => LEFT_PARENTHESIS,
             Token::If => IF,
+            Token::Function => FUNCTION,
             _ => token_value::ILLEGAL,
         }
     }

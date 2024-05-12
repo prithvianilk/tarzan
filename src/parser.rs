@@ -1,3 +1,4 @@
+use std::array::from_fn;
 use std::collections::HashMap;
 use crate::lexer::Lexer;
 use crate::ast::{BlockStatement, Expression, LetStatement, Program, Statement};
@@ -102,6 +103,11 @@ fn register_prefix_parse_functions(parser: &mut Parser) {
     parser.token_to_prefix_parse_functions_map.insert(
         token_value::IF,
         |parser| { parser.parse_if_expression() },
+    );
+
+    parser.token_to_prefix_parse_functions_map.insert(
+        token_value::FUNCTION,
+        |parser| { parser.parse_function_literal() },
     );
 }
 
@@ -368,6 +374,60 @@ impl Parser {
             consequence: Some(consequence),
             alternative: Some(alternative),
         });
+    }
+
+    fn parse_function_literal(&mut self) -> Option<Expression> {
+        let fn_token = self.current_token.clone();
+
+        if self.peek_token != Token::LeftParenthesis {
+            return None;
+        }
+        self.next_token();
+
+        let parameters = self.parse_function_parameters();
+
+        if self.peek_token != Token::LeftBracket {
+            return None;
+        }
+        self.next_token();
+
+        let body = self.parse_block_statement();
+
+        return Some(Expression::Function {
+            token: fn_token,
+            parameters,
+            body,
+        });
+    }
+
+    fn parse_function_parameters(&mut self) -> Vec<Expression> {
+        let mut parameters = vec![];
+
+        if self.peek_token == Token::RightParenthesis {
+            self.next_token();
+            return parameters;
+        }
+
+        self.next_token();
+        self.add_parameter(&mut parameters);
+
+        while self.peek_token == Token::Comma {
+            self.next_token_n_times(2);
+            self.add_parameter(&mut parameters);
+        }
+
+        if self.peek_token != Token::RightParenthesis {
+            let message = format!("Expected right parenthesis, got: {:?}", self.peek_token);
+            self.errors.push(message);
+        }
+        self.next_token();
+
+        return parameters;
+    }
+
+    fn add_parameter(&mut self, parameters: &mut Vec<Expression>) {
+        let parameter = Expression::Identifier(self.current_token.clone());
+        parameters.push(parameter);
     }
 
     fn parse_block_statement(&mut self) -> BlockStatement {

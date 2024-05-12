@@ -1,5 +1,6 @@
 use std::fmt::{Display, Formatter};
 use crate::token;
+use crate::token::Token;
 
 #[derive(Debug)]
 pub enum Statement {
@@ -26,6 +27,7 @@ pub enum Expression {
     PrefixExpression { operator: String, right: Box<Expression> },
     InfixExpression { operator: String, left: Box<Expression>, right: Box<Expression> },
     IfExpression { token: token::Token, condition: Box<Expression>, consequence: Option<BlockStatement>, alternative: Option<BlockStatement> },
+    Function { token: Token, parameters: Vec<Expression>, body: BlockStatement },
 }
 
 #[derive(Debug)]
